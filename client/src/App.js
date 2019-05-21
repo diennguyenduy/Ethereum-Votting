@@ -17,7 +17,7 @@ class App extends Component {
     notice: null,
     candidate: [
       {
-        name: null,
+        Address: null,
         voteCount: null
       }
     ]
@@ -30,6 +30,7 @@ class App extends Component {
 
       // Use web3 to get the user's accounts.
       const addresses = await web3.eth.getAccounts();
+      console.log(addresses);
 
       // Get the contract instance.
       const networkId = await web3.eth.net.getId();
@@ -41,15 +42,15 @@ class App extends Component {
       var candidateLength = await instance.methods.getCandidateLength().call();
       var candidatesResults = $("#candidatesResults"); 
       var candidatesSelect = $('#candidatesSelect');
-    
+
       for (var i = 0; i < candidateLength; i++)
       {
         var candidate = await instance.methods.candidates(i).call(); 
         var id = i;
-        var name = candidate.name;
+        var address = candidate.Address;
         var voteCount = candidate.voteCount;
-        candidatesResults.append("<tr><th>" + id + "</th><td>" + name + "</td><td>" + voteCount + "</td></tr>");
-        candidatesSelect.append("<option value='" + name + "'>" + name + "</ option>");
+        candidatesResults.append("<tr><th>" + id + "</th><td>" + address + "</td><td>" + voteCount + "</td></tr>");
+        candidatesSelect.append("<option value='" + address + "'>" + address + "</ option>");
       }
 
       // Set web3, accounts, and contract to the state
@@ -88,8 +89,8 @@ class App extends Component {
   handleSubmitVote = async event => {
     event.preventDefault();
     const { accounts, contract } = this.state;
-    var name = $("#candidatesSelect").val();
-    await contract.methods.vote(name).send({ from: accounts[0] });
+    var address = $("#candidatesSelect").val();
+    await contract.methods.vote(address).send({ from: accounts[0] });
     window.location.reload();
   };
   // Start the election
@@ -121,7 +122,7 @@ class App extends Component {
           <thead>
             <tr>
               <th scope="col">ID</th>
-              <th scope="col">Name</th>
+              <th scope="col">Address</th>
               <th scope="col">Vote Count</th>
             </tr>
           </thead>

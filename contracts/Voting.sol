@@ -2,7 +2,7 @@ pragma solidity ^0.4.24;
 
 contract Voting {
     struct Candidate {
-      string name;
+      address Address;
       uint voteCount;
     }
 
@@ -12,25 +12,27 @@ contract Voting {
       FINISH
     }
 
-    address public chairPerson;
+    address public owner;
     Candidate[] public candidates;
     address[] public voters;
     Stage public stage;
     uint public totalVoteCount;
 
     event Notify(string x);
+    event winner(address winnerAddress);
 
     constructor () public {
-      chairPerson = msg.sender;
-      stage = Stage.INIT;
+        owner = msg.sender;
+        stage = Stage.INIT;
     }
 
     modifier onlyOwner() {
-      if (msg.sender != chairPerson) {
-        emit Notify("Only owner can do it");
-        return;
-      }
-      _;
+        require(msg.sender == owner);
+        if (msg.sender != owner) {
+            emit Notify("Only owner can do it");
+            return;
+        }
+        _;
     }
 
     modifier checkStage(Stage _stage) {
@@ -41,26 +43,10 @@ contract Voting {
       _;
     }
 
-    function strConcat(string _a, string _b, string _c, string _d, string _e) returns (string){
-        bytes memory _ba = bytes(_a);
-        bytes memory _bb = bytes(_b);
-        bytes memory _bc = bytes(_c);
-        bytes memory _bd = bytes(_d);
-        bytes memory _be = bytes(_e);
-        string memory abcde = new string(_ba.length + _bb.length + _bc.length + _bd.length + _be.length);
-        bytes memory babcde = bytes(abcde);
-        uint k = 0;
-        for (uint i = 0; i < _ba.length; i++) babcde[k++] = _ba[i];
-        for (i = 0; i < _bb.length; i++) babcde[k++] = _bb[i];
-        for (i = 0; i < _bc.length; i++) babcde[k++] = _bc[i];
-        for (i = 0; i < _bd.length; i++) babcde[k++] = _bd[i];
-        for (i = 0; i < _be.length; i++) babcde[k++] = _be[i];
-        return string(babcde);
-    }
-    
-    function addCandidate(string _candidate) onlyOwner() checkStage(Stage.INIT) {
+    function addCandidate(address _candidate) onlyOwner() checkStage(Stage.INIT) {
+      require(msg.sender == owner);
       for(uint i = 0; i < candidates.length; i++) {
-        if(keccak256(_candidate) == keccak256(candidates[i].name)) {
+        if(keccak256(_candidate) == keccak256(candidates[i].Address)) {
           emit Notify("This candidate is existed");
           return;
         }
@@ -85,9 +71,9 @@ contract Voting {
 
     function winning() public checkStage(Stage.FINISH) {
       uint winningCount = 0;
-      string _winner;
+      address _winner;
       uint _voteCount;
-      string memory result;
+      address result;
       
       for (uint i = 0; i < candidates.length; i++)
       {
@@ -95,19 +81,18 @@ contract Voting {
           {
             winningCount = candidates[i].voteCount;
             _voteCount = winningCount;
-            _winner = candidates[i].name;
+            _winner = candidates[i].Address;
           }
       }
-      
-      result = strConcat(_winner, " is the winner", "", "", "");
-      emit Notify(result);
+
+      emit winner(result);
     }
 
     function getCandidateLength() public constant returns (uint lengthCandidate) {
           lengthCandidate = candidates.length;
     }
 
-    function vote(string _candidate) checkStage(Stage.START) {
+    function vote(address _candidate) checkStage(Stage.START) {
       for (uint i = 0; i < voters.length; i++) {
         if (msg.sender == voters[i]) {
           emit Notify("This voters was existed");
@@ -115,7 +100,7 @@ contract Voting {
         }
       }
       for(i = 0; i < candidates.length; i++) {
-        string memory tempName = candidates[i].name;
+        address tempName = candidates[i].Address;
         if(keccak256(_candidate) == keccak256(tempName)) {
             candidates[i].voteCount++;
             totalVoteCount++;
